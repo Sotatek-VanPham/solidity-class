@@ -1,0 +1,174 @@
+{
+  "manifestVersion": "3.2",
+  "proxies": [
+    {
+      "address": "0xe5C7ED15BB2684EbAc8A7FF1034DF32F0BeFD7F5",
+      "txHash": "0x8c296c20a6f86da286c0f330638990ca73c8497b39c6a544881f385c77dfa91a",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xEb2899a96f2017567e95ab9E7fDa3C0A216Ce8F9",
+      "txHash": "0x800ed16d8d2d398fdc6cacebdbaa6a56e56e078b17b54aaf69535f1c10497c20",
+      "kind": "transparent"
+    }
+  ],
+  "impls": {
+    "6e2e5c7c2cb6d6e2d20a3d35bc4402299e26da5f5929233e4acf7b657f5c1220": {
+      "address": "0x4a8790723e076C8E5DBEBeF6F10924169bD88f2D",
+      "txHash": "0x6647c1bda62a0aafe111665f5d7f033532c5b20980ffb0f4fa352ef0b00e24b5",
+      "layout": {
+        "solcVersion": "0.8.20",
+        "storage": [
+          {
+            "label": "swapRequests",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_mapping(t_uint256,t_struct(SwapRequest)4612_storage)",
+            "contract": "SwapContract",
+            "src": "contracts/SwapContract.sol:20"
+          },
+          {
+            "label": "owner",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_address",
+            "contract": "SwapContract",
+            "src": "contracts/SwapContract.sol:21"
+          },
+          {
+            "label": "nextRequestId",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_uint256",
+            "contract": "SwapContract",
+            "src": "contracts/SwapContract.sol:22"
+          },
+          {
+            "label": "treasury",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_address",
+            "contract": "SwapContract",
+            "src": "contracts/SwapContract.sol:23"
+          },
+          {
+            "label": "_locked",
+            "offset": 20,
+            "slot": "3",
+            "type": "t_bool",
+            "contract": "SwapContract",
+            "src": "contracts/SwapContract.sol:24"
+          },
+          {
+            "label": "_initialized",
+            "offset": 21,
+            "slot": "3",
+            "type": "t_bool",
+            "contract": "SwapContract",
+            "src": "contracts/SwapContract.sol:26"
+          }
+        ],
+        "types": {
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)10_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_enum(Status)4602": {
+            "label": "enum SwapContract.Status",
+            "members": [
+              "Pending",
+              "Approved",
+              "Rejected",
+              "Canceled"
+            ],
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_uint256,t_struct(SwapRequest)4612_storage)": {
+            "label": "mapping(uint256 => struct SwapContract.SwapRequest)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(SwapRequest)4612_storage": {
+            "label": "struct SwapContract.SwapRequest",
+            "members": [
+              {
+                "label": "sender",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "receiver",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "amount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "status",
+                "type": "t_enum(Status)4602",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    }
+  }
+}
