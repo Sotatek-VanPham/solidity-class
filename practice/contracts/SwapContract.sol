@@ -1,8 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract SwapContract is Initializable{
+contract SwapContract is Initializable, ReentrancyGuard {
+    address owner;
+    address public treasury;
+    uint public constant FEE = 5;
+
     enum Status {
         Pending,
         Approved,
@@ -13,26 +19,26 @@ contract SwapContract is Initializable{
     struct SwapRequest {
         address sender;
         address receiver;
-        uint256 amount;
+        address tokenSend;
+        address tokenReceive;
+        uint256 amountSend;
+        uint256 amountReceive;
         Status status;
     }
 
-    mapping(uint256 => SwapRequest) public swapRequests;
-    address owner;
-    uint256 public nextRequestId;
-    address public treasury;
-    bool private _locked;
-    uint public constant FEE = 5;
-    bool private _initialized;
+    mapping(bytes32 => SwapRequest) public swapRequests;
+    mapping(address => uint256) public nonces;
 
     event SwapRequestCreated(
-        uint256 indexed requestId,
-        address indexed sender,
-        address indexed receiver,
-        uint256 amount,
-        Status status
+        bytes32 requestId,
+        address sender,
+        address receiver,
+        address tokenSend,
+        address tokenReceive,
+        uint256 amountSend,
+        uint256 amountReceive
     );
-    event SwapRequestStatusChanged(uint256 indexed requestId, Status status);
+    event SwapRequestStatusChanged(bytes32 requestId, Status status);
 
     function initialize() public initializer {
         owner = msg.sender;
@@ -43,36 +49,44 @@ contract SwapContract is Initializable{
         _;
     }
 
-    modifier nonReentrant() {
-        require(!_locked, "ReentrancyGuard: reentrant call");
-        _locked = true;
-        _;
-        _locked = false;
-    }
-
     function createSwapRequest(
         address _receiver,
-        uint256 _amount
-    ) external payable {
+        address _tokenSend,
+        uint256 _amountSend,
+        address _tokenReceive,
+        uint256 _amountReceive
+    ) external nonReentrant {
         require(_receiver != address(0), "Invalid receiver address");
+        require(_tokenSend != address(0), "Invalid tokenSend address");
+        require(_tokenReceive != address(0), "Invalid tokenReceive address");
+        require(_amountSend > 0 && _amountReceive > 0, "Invalid amount");
 
-        swapRequests[nextRequestId] = SwapRequest(
+        uint256 nonce = nonces[msg.sender]++;
+
+        bytes32 requestId = keccak256(abi.encodePacked(msg.sender, nonce));
+        IERC20(_tokenSend).transferFrom(msg.sender, address(this), _amountSend);
+
+        swapRequests[requestId] = SwapRequest(
             msg.sender,
             _receiver,
-            _amount,
+            _tokenSend,
+            _tokenReceive,
+            _amountSend,
+            _amountReceive,
             Status.Pending
         );
         emit SwapRequestCreated(
-            nextRequestId,
+            requestId,
             msg.sender,
             _receiver,
-            _amount,
-            Status.Pending
+            _tokenSend,
+            _tokenReceive,
+            _amountSend,
+            _amountReceive
         );
-        nextRequestId++;
     }
 
-    function approveSwapRequest(uint256 _requestId) external nonReentrant {
+    function approveSwapRequest(bytes32 _requestId) external nonReentrant {
         SwapRequest storage request = swapRequests[_requestId];
         require(request.receiver == msg.sender, "Only receiver can approve");
         require(
@@ -80,16 +94,34 @@ contract SwapContract is Initializable{
             "Swap request status is not pending"
         );
 
-        uint256 feeAmount = (request.amount * FEE) / 100;
-        uint256 transferAmount = request.amount - feeAmount;
-        payable(request.sender).transfer(transferAmount);
-        payable(treasury).transfer(feeAmount);
+        uint256 sendFee = (request.amountSend * FEE) / 100;
+        uint256 receiveFee = (request.amountReceive * FEE) / 100;
+
+        IERC20(request.tokenReceive).transferFrom(
+            msg.sender,
+            address(this),
+            request.amountReceive
+        );
+
+        IERC20(request.tokenReceive).transfer(treasury, receiveFee);
+
+        IERC20(request.tokenReceive).transfer(
+            request.sender,
+            request.amountReceive - receiveFee
+        );
+
+        IERC20(request.tokenSend).transfer(treasury, sendFee);
+
+        IERC20(request.tokenSend).transfer(
+            request.receiver,
+            request.amountSend - sendFee
+        );
 
         request.status = Status.Approved;
         emit SwapRequestStatusChanged(_requestId, Status.Approved);
     }
 
-    function rejectSwapRequest(uint256 _requestId) external nonReentrant {
+    function rejectSwapRequest(bytes32 _requestId) external nonReentrant {
         SwapRequest storage request = swapRequests[_requestId];
         require(request.receiver == msg.sender, "Only receiver can reject");
         require(
@@ -97,24 +129,27 @@ contract SwapContract is Initializable{
             "Swap request status is not pending"
         );
 
+        IERC20(request.tokenSend).transfer(request.sender, request.amountSend);
+
         request.status = Status.Rejected;
         emit SwapRequestStatusChanged(_requestId, Status.Rejected);
     }
 
-    function cancelSwapRequest(uint256 _requestId) external nonReentrant {
+    function cancelSwapRequest(bytes32 _requestId) external nonReentrant {
         SwapRequest storage request = swapRequests[_requestId];
         require(request.sender == msg.sender, "Only sender can cancel");
         require(
             request.status == Status.Pending,
             "Swap request status is not pending"
         );
+        IERC20(request.tokenSend).transfer(request.sender, request.amountSend);
 
-        payable(request.sender).transfer(request.amount);
         request.status = Status.Canceled;
         emit SwapRequestStatusChanged(_requestId, Status.Canceled);
     }
 
     function setTreasury(address _treasury) external onlyOwner {
+        require(_treasury != address(0), "Invalid address");
         treasury = _treasury;
     }
 
