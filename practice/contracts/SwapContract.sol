@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract SwapContract is Initializable, ReentrancyGuard {
+contract SwapContract is Initializable, ReentrancyGuardUpgradeable {
     using SafeERC20 for IERC20;
     address owner;
     address public treasury;
@@ -43,6 +43,8 @@ contract SwapContract is Initializable, ReentrancyGuard {
     event SwapRequestStatusChanged(bytes32 requestId, Status status);
 
     function initialize() public initializer {
+        __ReentrancyGuard_init();
+
         owner = msg.sender;
     }
 
