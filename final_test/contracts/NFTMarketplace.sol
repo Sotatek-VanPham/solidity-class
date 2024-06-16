@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "contracts/interfaces/INFTMarketplace.sol";
@@ -13,7 +14,12 @@ import {ValidateLib} from "./libraries/ValidateLib.sol";
 import {Types} from "contracts/libraries/constants/Types.sol";
 import {Errors} from "contracts/libraries/constants/Errors.sol";
 
-contract NFTMarketplace is INFTMarketplace, ReentrancyGuard, Ownable {
+contract NFTMarketplace is
+    INFTMarketplace,
+    Initializable,
+    ReentrancyGuardUpgradeable,
+    OwnableUpgradeable
+{
     using SafeERC20 for IERC20;
 
     mapping(bytes32 => Types.FixedPriceNFT) public fixedPriceNfts;
@@ -23,12 +29,6 @@ contract NFTMarketplace is INFTMarketplace, ReentrancyGuard, Ownable {
     address public treasury;
     uint256 public buyerFee;
     uint256 public sellerFee;
-
-    constructor(address _treasury, uint256 _buyerFee, uint256 _sellerFee) {
-        treasury = _treasury;
-        buyerFee = _buyerFee;
-        sellerFee = _sellerFee;
-    }
 
     modifier notBlacklisted() {
         ValidateLib.validateNotBlacklisted(_msgSender(), _blacklist);
@@ -50,7 +50,6 @@ contract NFTMarketplace is INFTMarketplace, ReentrancyGuard, Ownable {
         bool isERC1155,
         uint256 amount
     ) external override notBlacklisted {
-        ValidateLib.validateNFTContract(nftContract);
         ValidateLib.validatePrice(price);
 
         bytes32 listingId = keccak256(
@@ -352,5 +351,10 @@ contract NFTMarketplace is INFTMarketplace, ReentrancyGuard, Ownable {
             revert Errors.InvalidParameter();
         }
         _blacklist[_user] = false;
+    }
+
+    function setTreasury(address _treasury) external onlyOwner {
+        require(_treasury != address(0), "Invalid address");
+        treasury = _treasury;
     }
 }

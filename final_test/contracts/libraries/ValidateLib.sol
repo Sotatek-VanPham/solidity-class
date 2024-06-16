@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
@@ -18,17 +18,6 @@ library ValidateLib {
 
     function validateNFTNotZeroAddress(address nftContract) internal pure {
         if (nftContract == address(0)) {
-            revert Errors.InvalidNFTContract();
-        }
-    }
-
-    function validateNFTContract(address nftContract) internal view {
-        if (
-            !IERC721(nftContract).supportsInterface(
-                type(IERC721).interfaceId
-            ) ||
-            !IERC1155(nftContract).supportsInterface(type(IERC1155).interfaceId)
-        ) {
             revert Errors.InvalidNFTContract();
         }
     }
