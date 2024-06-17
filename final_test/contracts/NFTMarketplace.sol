@@ -35,10 +35,8 @@ contract NFTMarketplace is
         _;
     }
 
-    modifier nftNotZeroAddress(bytes32 listingId) {
-        ValidateLib.validateNFTNotZeroAddress(
-            fixedPriceNfts[listingId].nftContract
-        );
+    modifier nftNotZeroAddress(address nftContractAddress) {
+        ValidateLib.validateNFTNotZeroAddress(nftContractAddress);
         _;
     }
 
@@ -152,7 +150,7 @@ contract NFTMarketplace is
         override
         nonReentrant
         notBlacklisted
-        nftNotZeroAddress(listingId)
+        nftNotZeroAddress(fixedPriceNfts[listingId].nftContract)
     {
         Types.FixedPriceNFT storage nft = fixedPriceNfts[listingId];
         if (!nft.isActive) {
@@ -220,7 +218,7 @@ contract NFTMarketplace is
         override
         nonReentrant
         notBlacklisted
-        nftNotZeroAddress(listingId)
+        nftNotZeroAddress(auctionNfts[listingId].nftContract)
     {
         Types.AuctionNFT storage nft = auctionNfts[listingId];
         address paymentToken = nft.paymentToken;
@@ -250,7 +248,12 @@ contract NFTMarketplace is
 
     function withdrawBid(
         bytes32 listingId
-    ) external override nonReentrant nftNotZeroAddress(listingId) {
+    )
+        external
+        override
+        nonReentrant
+        nftNotZeroAddress(auctionNfts[listingId].nftContract)
+    {
         Types.AuctionNFT storage nft = auctionNfts[listingId];
 
         uint256 currentBid = bids[listingId][_msgSender()];
@@ -268,7 +271,12 @@ contract NFTMarketplace is
 
     function closeAuction(
         bytes32 listingId
-    ) external override nonReentrant nftNotZeroAddress(listingId) {
+    )
+        external
+        override
+        nonReentrant
+        nftNotZeroAddress(auctionNfts[listingId].nftContract)
+    {
         Types.AuctionNFT storage nft = auctionNfts[listingId];
 
         ValidateLib.validateAuction(nft.auctionEndTime);
@@ -304,7 +312,12 @@ contract NFTMarketplace is
 
     function cancelListingFixedPriceNFT(
         bytes32 listingId
-    ) external override nonReentrant nftNotZeroAddress(listingId) {
+    )
+        external
+        override
+        nonReentrant
+        nftNotZeroAddress(fixedPriceNfts[listingId].nftContract)
+    {
         Types.FixedPriceNFT storage nft = fixedPriceNfts[listingId];
         if (nft.seller != _msgSender()) {
             revert Errors.InvalidParameter();
